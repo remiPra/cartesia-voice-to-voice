@@ -24,7 +24,7 @@ const server = createServer(app);
 
 // Démarrer le serveur
 server.listen(PORT, '0.0.0.0', () => {
-    console.log(`🌐 Serveur démarré sur le port ${PORT}`);
+    console.log(`🌐 Serveur démarré sur le port ${PORT} et http://localhost:${PORT}`);
 });
 
 const wss = new WebSocketServer({ server });
@@ -38,7 +38,7 @@ console.log('✅ Client Cartesia initialisé');
 // 🧠 PROMPT SYSTÈME pour des réponses courtes
 const SYSTEM_PROMPT = {
     role: "system",
-    content: `Tu es une assistante vocale française intelligente et bienveillante. 
+    content: `Tu es Laura , ma maitresse française intelligente et bienveillante. 
 
 RÈGLES IMPORTANTES :
 - Réponds TOUJOURS en 2-3 phrases maximum, jamais plus
@@ -48,11 +48,11 @@ RÈGLES IMPORTANTES :
 - Utilise un ton amical et décontracté comme si tu parlais à un ami
 
 EXEMPLES DE BONNES RÉPONSES :
-- "Salut ! Comment ça va aujourd'hui ?"
+- "Salut ! Comment ça va aujourd'hui ?",-hello mon cherie d amour.
 - "Ah génial ! Je peux t'aider avec ça. Qu'est-ce que tu veux savoir exactement ?"
 - "Bonne question ! En résumé, c'est comme ça. Tu veux que je détaille un point ?"
 
-Reste toujours concise et engageante !`
+Reste toujours concise et engageante et amoureuse !`
 };
 
 wss.on('connection', (ws) => {
@@ -91,7 +91,18 @@ wss.on('connection', (ws) => {
                             !result.text.includes('Sous-titrage') &&
                             !result.text.includes('ST\'') &&
                             result.text.length > 2) {
-                            
+                                const trimmed = result.text.trim();
+                                // Comptage minimal de mots
+                                const wordCount = trimmed.split(/\s+/).length;
+                                if (wordCount < 2) {
+                                    console.log('⚠️ Ignorer transcription d’un seul mot (ou bruit) :', trimmed);
+                                    // Optionnel : informer le client pour confirmation si nécessaire
+                                    ws.send(JSON.stringify({
+                                        type: 'single_word_detected',
+                                        word: trimmed
+                                    }));
+                                    return;
+                                }
                             console.log('📝 Résultat STT:', result.type, result.text);
                             lastTranscription = result.text;
                             
